@@ -46,23 +46,18 @@ def fetch_rss(source: dict[str, Any], fandom_id: str) -> list[RawItem]:
 
 async def _scrape_page(url: str, selector: str) -> list[dict]:
     try:
+        from bs4 import BeautifulSoup
         from crawl4ai import AsyncWebCrawler
-        from crawl4ai.extraction_strategy import JsonCssExtractionStrategy
 
-        schema = {
-            "name": "links",
-            "baseSelector": selector,
-            "fields": [
-                {"name": "href", "type": "attribute", "attribute": "href"},
-                {"name": "text", "type": "text"},
-            ],
-        }
-        strategy = JsonCssExtractionStrategy(schema)
         async with AsyncWebCrawler(verbose=False) as crawler:
-            result = await crawler.arun(url=url, extraction_strategy=strategy)
-            if result.success and result.extracted_content:
-                import json
-                return json.loads(result.extracted_content)
+            result = await crawler.arun(url=url)
+            if result.success and result.html:
+                soup = BeautifulSoup(result.html, "html.parser")
+                return [
+                    {"href": a.get("href", ""), "text": a.get_text(strip=True)}
+                    for a in soup.select(selector)
+                    if a.get("href")
+                ]
     except Exception as e:
         logger.warning("scrape failed %s: %s", url, e)
     return []
