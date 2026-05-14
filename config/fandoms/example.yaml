@@ -1,0 +1,19 @@
+id: your-fandom
+name: Your Fandom Name
+members:
+  - id: member1
+    names: [本名, 愛称, Romanized]
+  - id: member2
+    names: [本名, 愛称, Romanized]
+sources:
+  rss:
+    - url: https://example.com/rss
+      source_id: source_name
+  scrape:
+    - url: https://example.com/news/
+      source_id: official
+      selector: ".news-list a"
+  rsshub:
+    - url: http://localhost:1200/twitter/user/account_name
+      source_id: x
+      enabled: false

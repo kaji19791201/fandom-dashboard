@@ -3,3 +3,5 @@ __pycache__/
 .venv/
 .pytest_cache/
 .env.keys
+config/fandoms/*.yaml
+!config/fandoms/example.yaml
