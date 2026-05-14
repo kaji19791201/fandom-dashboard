@@ -1,0 +1,28 @@
+[project]
+name = "fandom-dashboard"
+version = "0.1.0"
+description = "Fandom news collector with RSS/scraping + LLM summarization + Obsidian output"
+requires-python = ">=3.12"
+dependencies = [
+    "feedparser>=6.0.11",
+    "crawl4ai>=0.4.0",
+    "rapidfuzz>=3.0.0",
+    "pyyaml>=6.0.3",
+    "python-dateutil>=2.9.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.8.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fandom_dashboard"]
