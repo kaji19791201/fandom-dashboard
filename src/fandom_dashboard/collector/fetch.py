@@ -68,6 +68,20 @@ async def _scrape_page(url: str, selector: str) -> list[dict]:
     return []
 
 
+def _jsonld_published(soup) -> str:
+    import json
+    for s in soup.find_all("script", type="application/ld+json"):
+        try:
+            data = json.loads(s.string or "")
+            graph = data.get("@graph", [data])
+            for node in graph:
+                if node.get("@type") in ("NewsArticle", "Article", "BlogPosting"):
+                    return node.get("datePublished") or node.get("dateModified", "")
+        except Exception:
+            pass
+    return ""
+
+
 async def _fetch_page_ogp(url: str) -> dict:
     try:
         from bs4 import BeautifulSoup
@@ -86,11 +100,16 @@ async def _fetch_page_ogp(url: str) -> dict:
                 tag = soup.find("meta", attrs={"name": name})
                 return tag["content"] if tag and tag.get("content") else ""
 
+            published = (
+                og("article:published_time")
+                or meta_name("article:published_time")
+                or _jsonld_published(soup)
+            )
             return {
                 "title": og("og:title") or meta_name("title") or (soup.title.string if soup.title else ""),
                 "description": og("og:description") or meta_name("description"),
                 "image": og("og:image"),
-                "published": meta_name("article:published_time") or meta_name("article:modified_time"),
+                "published": published,
             }
     except Exception as e:
         logger.warning("OGP fetch failed %s: %s", url, e)
