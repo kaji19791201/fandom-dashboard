@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.kaji.fandom-dashboard.collect</string>
+
+    <!-- 朝 9:03 / 夜 20:57 -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>3</integer></dict>
+        <dict><key>Hour</key><integer>20</integer><key>Minute</key><integer>57</integer></dict>
+    </array>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-c</string>
+        <string>cd /Users/Shared/kaji/projects/fandom-dashboard &amp;&amp; mkdir -p logs &amp;&amp; /Users/Shared/kaji/.home/.homebrew/bin/dotenvx run -- /Users/Shared/kaji/.home/.homebrew/bin/uv run python -m fandom_dashboard.run</string>
+    </array>
+
+    <key>StandardOutPath</key>
+    <string>/Users/Shared/kaji/projects/fandom-dashboard/logs/launchd-collect.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/Shared/kaji/projects/fandom-dashboard/logs/launchd-collect.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>/Users/Shared/kaji/.home</string>
+        <key>PATH</key>
+        <string>/Users/Shared/kaji/.home/.homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+</dict>
+</plist>
