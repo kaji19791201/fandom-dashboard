@@ -53,7 +53,10 @@ def run_fandom(fandom_config: dict, llm) -> int:
     raw = collect_all(fandom_config)
     logger.info("fetched: %d items", len(raw))
 
-    filtered = _keyword_filter(raw, fandom_config)
+    # Instagram items are from official member accounts — all are relevant
+    instagram_items = [i for i in raw if i.source_id.startswith("instagram_")]
+    other_items = [i for i in raw if not i.source_id.startswith("instagram_")]
+    filtered = instagram_items + _keyword_filter(other_items, fandom_config)
     logger.info("after keyword filter: %d items", len(filtered))
 
     deduped = deduplicate(filtered)
