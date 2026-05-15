@@ -3,9 +3,11 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Any
 
 import feedparser
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +109,42 @@ def fetch_scrape(source: dict[str, Any], fandom_id: str, base_url: str = "") -> 
     return items
 
 
+_IG_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
+    "X-IG-App-ID": "936619743392459",
+}
+
+
+def _get_ig_posts(username: str) -> list[dict]:
+    r = requests.get(
+        "https://www.instagram.com/api/v1/users/web_profile_info/",
+        params={"username": username},
+        headers=_IG_HEADERS,
+        timeout=15,
+    )
+    r.raise_for_status()
+    return r.json()["data"]["user"]["edge_owner_to_timeline_media"]["edges"]
+
+
+def fetch_instagram(source: dict[str, Any], fandom_id: str) -> list[RawItem]:
+    items = []
+    for e in _get_ig_posts(source["username"]):
+        node = e["node"]
+        caption = (node.get("edge_media_to_caption", {}).get("edges") or [{}])[0].get("node", {}).get("text", "")
+        published = datetime.fromtimestamp(node["taken_at_timestamp"], tz=timezone.utc).isoformat()
+        items.append(RawItem(
+            url=f"https://www.instagram.com/p/{node['shortcode']}/",
+            title=caption.split("\n")[0][:100],
+            summary=caption,
+            published=published,
+            image=node.get("thumbnail_src", ""),
+            source_id=source["source_id"],
+            fandom_id=fandom_id,
+            raw={"shortcode": node["shortcode"]},
+        ))
+    return items
+
+
 def collect_all(fandom_config: dict) -> list[RawItem]:
     fandom_id = fandom_config["id"]
     sources = fandom_config.get("sources", {})
@@ -132,5 +170,11 @@ def collect_all(fandom_config: dict) -> list[RawItem]:
             items.extend(fetch_scrape(src, fandom_id))
         except Exception as e:
             logger.error("scrape error %s: %s", src["source_id"], e)
+
+    for src in sources.get("instagram", []):
+        try:
+            items.extend(fetch_instagram(src, fandom_id))
+        except Exception as e:
+            logger.error("instagram fetch error %s: %s", src["source_id"], e)
 
     return items
