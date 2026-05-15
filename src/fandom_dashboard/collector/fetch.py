@@ -70,17 +70,27 @@ async def _scrape_page(url: str, selector: str) -> list[dict]:
 
 async def _fetch_page_ogp(url: str) -> dict:
     try:
+        from bs4 import BeautifulSoup
         from crawl4ai import AsyncWebCrawler
         async with AsyncWebCrawler(verbose=False) as crawler:
             result = await crawler.arun(url=url)
-            if not result.success:
+            if not result.success or not result.html:
                 return {}
-            meta = result.metadata or {}
+            soup = BeautifulSoup(result.html, "html.parser")
+
+            def og(prop: str) -> str:
+                tag = soup.find("meta", property=prop)
+                return tag["content"] if tag and tag.get("content") else ""
+
+            def meta_name(name: str) -> str:
+                tag = soup.find("meta", attrs={"name": name})
+                return tag["content"] if tag and tag.get("content") else ""
+
             return {
-                "title": meta.get("og:title") or meta.get("title", ""),
-                "description": meta.get("og:description", ""),
-                "image": meta.get("og:image", ""),
-                "published": meta.get("article:published_time") or meta.get("article:modified_time", ""),
+                "title": og("og:title") or meta_name("title") or (soup.title.string if soup.title else ""),
+                "description": og("og:description") or meta_name("description"),
+                "image": og("og:image"),
+                "published": meta_name("article:published_time") or meta_name("article:modified_time"),
             }
     except Exception as e:
         logger.warning("OGP fetch failed %s: %s", url, e)
