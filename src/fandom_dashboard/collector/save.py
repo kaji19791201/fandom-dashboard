@@ -75,7 +75,7 @@ image: {item.image or ""}
 
 """
     if item.image:
-        content += f"![]({item.image})\n\n"
+        content += f"![](<{item.image}>)\n\n"
 
     if summary:
         content += f"{summary}\n\n"
