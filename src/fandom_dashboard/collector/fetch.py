@@ -87,10 +87,23 @@ async def _fetch_page_ogp(url: str) -> dict:
     return {}
 
 
+def _extract_date_from_url(url: str, pattern: str, fmt: str) -> str:
+    import re
+    m = re.search(pattern, url)
+    if m:
+        try:
+            return datetime.strptime(m.group(1), fmt).strftime("%Y-%m-%d")
+        except Exception:
+            pass
+    return ""
+
+
 def fetch_scrape(source: dict[str, Any], fandom_id: str, base_url: str = "") -> list[RawItem]:
     page_url = source["url"]
     selector = source.get("selector", "a")
     save_image = source.get("save_image", True)
+    date_url_pattern = source.get("date_url_pattern", "")
+    date_url_format = source.get("date_url_format", "")
     links = asyncio.run(_scrape_page(page_url, selector))
 
     items = []
@@ -102,12 +115,21 @@ def fetch_scrape(source: dict[str, Any], fandom_id: str, base_url: str = "") -> 
             href = (base_url or page_url.rstrip("/")) + href
 
         ogp = asyncio.run(_fetch_page_ogp(href))
+        published = (
+            _extract_date_from_url(href, date_url_pattern, date_url_format)
+            if date_url_pattern and date_url_format
+            else ogp.get("published", "")
+        )
+        title = ogp.get("title") or link.get("text", "")
+        summary = ogp.get("description", "")
+        image = ogp.get("image", "")
+
         items.append(RawItem(
             url=href,
-            title=ogp.get("title") or link.get("text", ""),
-            summary=ogp.get("description", ""),
-            published=ogp.get("published", ""),
-            image=ogp.get("image", ""),
+            title=title,
+            summary=summary,
+            published=published,
+            image=image,
             source_id=source["source_id"],
             fandom_id=fandom_id,
             save_image=save_image,
