@@ -108,7 +108,7 @@ async def _fetch_page_ogp(url: str) -> dict:
             return {
                 "title": og("og:title") or meta_name("title") or (soup.title.string if soup.title else ""),
                 "description": og("og:description") or meta_name("description"),
-                "image": og("og:image"),
+                "image": og("og:image").split("?")[0],
                 "published": published,
             }
     except Exception as e:
