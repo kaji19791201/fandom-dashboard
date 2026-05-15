@@ -26,19 +26,22 @@ def _load_llm():
 
 
 def _keyword_filter(items, fandom_config):
-    """Keep items that mention fandom name or any member name."""
+    """Keep items whose title mentions fandom name or any member name."""
     fandom_name = fandom_config["name"]
     member_names = [
         name
         for m in fandom_config.get("members", [])
         for name in m.get("names", [])
     ]
-    keywords = [fandom_name] + member_names
+    # skip short hiragana-only keywords (e.g. "れに") — too prone to substring false positives
+    keywords = [
+        kw for kw in [fandom_name] + member_names
+        if not (all("ぁ" <= c <= "ゖ" for c in kw) and len(kw) < 4)
+    ]
 
     filtered = []
     for item in items:
-        text = f"{item.title} {item.summary}"
-        if any(kw in text for kw in keywords):
+        if any(kw in item.title for kw in keywords):
             filtered.append(item)
     return filtered
 
