@@ -22,10 +22,12 @@ class RawItem:
     source_id: str
     fandom_id: str
     raw: dict = field(default_factory=dict)
+    save_image: bool = True
 
 
 def fetch_rss(source: dict[str, Any], fandom_id: str) -> list[RawItem]:
     feed = feedparser.parse(source["url"])
+    save_image = source.get("save_image", True)
     items = []
     for entry in feed.entries:
         image = ""
@@ -42,6 +44,7 @@ def fetch_rss(source: dict[str, Any], fandom_id: str) -> list[RawItem]:
             image=image,
             source_id=source["source_id"],
             fandom_id=fandom_id,
+            save_image=save_image,
         ))
     return items
 
@@ -86,6 +89,7 @@ async def _fetch_page_ogp(url: str) -> dict:
 def fetch_scrape(source: dict[str, Any], fandom_id: str, base_url: str = "") -> list[RawItem]:
     page_url = source["url"]
     selector = source.get("selector", "a")
+    save_image = source.get("save_image", True)
     links = asyncio.run(_scrape_page(page_url, selector))
 
     items = []
@@ -105,6 +109,7 @@ def fetch_scrape(source: dict[str, Any], fandom_id: str, base_url: str = "") -> 
             image=ogp.get("image", ""),
             source_id=source["source_id"],
             fandom_id=fandom_id,
+            save_image=save_image,
         ))
     return items
 
@@ -127,6 +132,7 @@ def _get_ig_posts(username: str) -> list[dict]:
 
 
 def fetch_instagram(source: dict[str, Any], fandom_id: str) -> list[RawItem]:
+    save_image = source.get("save_image", True)
     items = []
     for e in _get_ig_posts(source["username"]):
         node = e["node"]
@@ -141,6 +147,7 @@ def fetch_instagram(source: dict[str, Any], fandom_id: str) -> list[RawItem]:
             source_id=source["source_id"],
             fandom_id=fandom_id,
             raw={"shortcode": node["shortcode"]},
+            save_image=save_image,
         ))
     return items
 

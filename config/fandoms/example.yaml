@@ -13,7 +13,11 @@ sources:
     - url: https://example.com/news/
       source_id: official
       selector: ".news-list a"
+      save_image: false  # OGP がサイトロゴのみの場合は false（デフォルト: true）
   rsshub:
     - url: http://localhost:1200/twitter/user/account_name
       source_id: x
       enabled: false
+  instagram:
+    - username: account_name
+      source_id: instagram_account

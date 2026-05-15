@@ -2,16 +2,18 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 
+import requests
 from dateutil import parser as dateparser
 
 from .fetch import RawItem
 
 logger = logging.getLogger(__name__)
 
-DOCS_ROOT = Path("/Users/Shared/kaji/docs")
+DOCS_ROOT = Path(os.environ.get("DOCS_ROOT", "/Users/Shared/kaji/docs"))
 
 
 def _url_hash(url: str) -> str:
@@ -29,6 +31,22 @@ def _parse_date(published: str) -> str:
 
 def _slugify_sources(source_id: str) -> list[str]:
     return [s.strip() for s in source_id.split(",") if s.strip()]
+
+
+def _image_ext(url: str) -> str:
+    suffix = Path(url.split("?")[0]).suffix.lower()
+    return suffix if suffix in {".jpg", ".jpeg", ".png", ".webp", ".gif"} else ".jpg"
+
+
+def _download_image(url: str, dest: Path) -> bool:
+    try:
+        r = requests.get(url, timeout=15)
+        r.raise_for_status()
+        dest.write_bytes(r.content)
+        return True
+    except Exception as e:
+        logger.warning("image download failed %s: %s", url, e)
+        return False
 
 
 def save_item(
@@ -55,11 +73,27 @@ def save_item(
     category = llm_result.get("category", "news")
     summary = llm_result.get("summary", "")
 
-    # build frontmatter
+    # resolve image reference
+    image_ref = ""
+    image_embed = ""
+    if item.image and item.save_image:
+        local_name = f"{date_str}_{url_hash}{_image_ext(item.image)}"
+        local_path = output_dir / local_name
+        if local_path.exists() or _download_image(item.image, local_path):
+            image_ref = local_name
+            image_embed = f"![]({local_name})"
+        else:
+            # fallback to remote URL when download fails
+            image_ref = item.image
+            image_embed = f"![](<{item.image}>)"
+    elif item.image:
+        # save_image=False: keep URL in frontmatter but don't embed
+        image_ref = item.image
+
     sources_yaml = "\n".join(f"  - {s}" for s in sources)
     members_yaml = "\n".join(f"  - {m}" for m in members)
-
     title_escaped = item.title.replace('"', '\\"')
+
     content = f"""---
 fandom: {fandom_id}
 date: {date_str}
@@ -70,12 +104,12 @@ members:
 {members_yaml}
 title: "{title_escaped}"
 url: {item.url}
-image: {item.image or ""}
+image: {image_ref}
 ---
 
 """
-    if item.image:
-        content += f"![](<{item.image}>)\n\n"
+    if image_embed:
+        content += f"{image_embed}\n\n"
 
     if summary:
         content += f"{summary}\n\n"
