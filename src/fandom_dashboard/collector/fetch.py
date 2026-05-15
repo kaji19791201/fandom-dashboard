@@ -137,7 +137,7 @@ def fetch_instagram(source: dict[str, Any], fandom_id: str) -> list[RawItem]:
             title=caption.split("\n")[0][:100],
             summary=caption,
             published=published,
-            image=node.get("thumbnail_src", ""),
+            image=node.get("display_url") or node.get("thumbnail_src", ""),
             source_id=source["source_id"],
             fandom_id=fandom_id,
             raw={"shortcode": node["shortcode"]},
