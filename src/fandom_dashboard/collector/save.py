@@ -45,9 +45,10 @@ def _download_image(url: str, dest: Path) -> bool:
         r = requests.get(url, timeout=15)
         r.raise_for_status()
         dest.write_bytes(r.content)
+        logger.debug("  image: %s -> %s (%d KB)", url[:80], dest.name, len(r.content) // 1024)
         return True
     except Exception as e:
-        logger.warning("image download failed %s: %s", url, e)
+        logger.warning("  image download failed %s: %s", url[:80], e)
         return False
 
 
@@ -62,7 +63,7 @@ def save_item(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     url_hash = _url_hash(item.url)
-    date_str = _parse_date(item.published)
+    date_str = _parse_date(item.published, item.url)
     filename = f"{date_str}_{url_hash}.md"
     filepath = output_dir / filename
 
@@ -119,5 +120,5 @@ image: {image_ref}
     content += f"[元記事]({item.url})\n"
 
     filepath.write_text(content, encoding="utf-8")
-    logger.info("saved: %s", filename)
+    logger.info("saved: %s [%s] %s", filename, item.source_id, item.title[:50])
     return filepath
