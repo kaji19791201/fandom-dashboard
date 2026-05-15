@@ -80,6 +80,7 @@ async def _fetch_page_ogp(url: str) -> dict:
                 "title": meta.get("og:title") or meta.get("title", ""),
                 "description": meta.get("og:description", ""),
                 "image": meta.get("og:image", ""),
+                "published": meta.get("article:published_time") or meta.get("article:modified_time", ""),
             }
     except Exception as e:
         logger.warning("OGP fetch failed %s: %s", url, e)
@@ -105,7 +106,7 @@ def fetch_scrape(source: dict[str, Any], fandom_id: str, base_url: str = "") -> 
             url=href,
             title=ogp.get("title") or link.get("text", ""),
             summary=ogp.get("description", ""),
-            published="",
+            published=ogp.get("published", ""),
             image=ogp.get("image", ""),
             source_id=source["source_id"],
             fandom_id=fandom_id,
