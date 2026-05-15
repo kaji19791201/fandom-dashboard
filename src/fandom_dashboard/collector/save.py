@@ -20,12 +20,14 @@ def _url_hash(url: str) -> str:
     return hashlib.sha256(url.encode()).hexdigest()[:8]
 
 
-def _parse_date(published: str) -> str:
+def _parse_date(published: str, url: str = "") -> str:
     if not published:
+        logger.warning("no published date, using today: %s", url)
         return datetime.now().strftime("%Y-%m-%d")
     try:
         return dateparser.parse(published).strftime("%Y-%m-%d")
     except Exception:
+        logger.warning("unparsable date %r, using today: %s", published, url)
         return datetime.now().strftime("%Y-%m-%d")
 
 

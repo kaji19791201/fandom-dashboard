@@ -194,29 +194,36 @@ def collect_all(fandom_config: dict) -> list[RawItem]:
 
     for src in sources.get("rss", []):
         try:
-            items.extend(fetch_rss(src, fandom_id))
-            logger.info("RSS %s: %d items", src["source_id"], len(items))
+            new = fetch_rss(src, fandom_id)
+            items.extend(new)
+            logger.info("  rss %s: %d items", src["source_id"], len(new))
         except Exception as e:
-            logger.error("RSS fetch error %s: %s", src["source_id"], e)
+            logger.error("  rss %s: FAILED %s", src["source_id"], e)
 
     for src in sources.get("rsshub", []):
         if not src.get("enabled", True):
             continue
         try:
-            items.extend(fetch_rss(src, fandom_id))
+            new = fetch_rss(src, fandom_id)
+            items.extend(new)
+            logger.info("  rsshub %s: %d items", src["source_id"], len(new))
         except Exception as e:
-            logger.error("RSSHub fetch error %s: %s", src["source_id"], e)
+            logger.error("  rsshub %s: FAILED %s", src["source_id"], e)
 
     for src in sources.get("scrape", []):
         try:
-            items.extend(fetch_scrape(src, fandom_id))
+            new = fetch_scrape(src, fandom_id)
+            items.extend(new)
+            logger.info("  scrape %s: %d items", src["source_id"], len(new))
         except Exception as e:
-            logger.error("scrape error %s: %s", src["source_id"], e)
+            logger.error("  scrape %s: FAILED %s", src["source_id"], e)
 
     for src in sources.get("instagram", []):
         try:
-            items.extend(fetch_instagram(src, fandom_id))
+            new = fetch_instagram(src, fandom_id)
+            items.extend(new)
+            logger.info("  instagram %s: %d items", src["source_id"], len(new))
         except Exception as e:
-            logger.error("instagram fetch error %s: %s", src["source_id"], e)
+            logger.error("  instagram %s: FAILED %s", src["source_id"], e)
 
     return items
