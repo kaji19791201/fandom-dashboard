@@ -25,18 +25,29 @@ def _load_llm():
     raise ValueError(f"Unknown LLM_PROVIDER: {provider}")
 
 
-def _keyword_filter(items, fandom_config):
-    """Keep items that mention fandom name or any member name."""
+_HIRAGANA = frozenset(chr(c) for c in range(0x3041, 0x3097))
+
+
+def _is_short_hiragana(kw: str) -> bool:
+    return len(kw) < 4 and all(c in _HIRAGANA for c in kw)
+
+
+def _keyword_filter(items, fandom_config, filter_source_ids: set[str]):
+    """Keep items that mention fandom name or any member name.
+    Only items whose source_id is in filter_source_ids are subject to filtering."""
     fandom_name = fandom_config["name"]
     member_names = [
         name
         for m in fandom_config.get("members", [])
         for name in m.get("names", [])
     ]
-    keywords = [fandom_name] + member_names
+    keywords = [kw for kw in ([fandom_name] + member_names) if not _is_short_hiragana(kw)]
 
     filtered = []
     for item in items:
+        if item.source_id not in filter_source_ids:
+            filtered.append(item)
+            continue
         text = f"{item.title} {item.summary}"
         if any(kw in text for kw in keywords):
             filtered.append(item)
@@ -50,7 +61,15 @@ def run_fandom(fandom_config: dict, llm) -> int:
     raw = collect_all(fandom_config)
     logger.info("fetched: %d items", len(raw))
 
-    filtered = _keyword_filter(raw, fandom_config)
+    sources = fandom_config.get("sources", {})
+    filter_source_ids = {
+        src["source_id"]
+        for src_type in ["rss", "scrape", "rsshub"]
+        for src in sources.get(src_type, [])
+        if src.get("filter", False)
+    }
+
+    filtered = _keyword_filter(raw, fandom_config, filter_source_ids)
     logger.info("after keyword filter: %d items", len(filtered))
 
     deduped = deduplicate(filtered)
