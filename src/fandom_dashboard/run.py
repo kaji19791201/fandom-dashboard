@@ -75,9 +75,18 @@ def run_fandom(fandom_config: dict, llm) -> int:
     deduped = deduplicate(filtered)
     logger.info("after dedup: %d items", len(deduped))
 
+    # instagram_<member_id> → member_id mapping for overriding LLM inference
+    ig_member_map = {
+        src["source_id"]: src["source_id"].removeprefix("instagram_")
+        for src in sources.get("instagram", [])
+        if src["source_id"] != "instagram_official"
+    }
+
     saved = 0
     for item in deduped:
         llm_result = summarize(item, llm, fandom_config.get("members", []))
+        if item.source_id in ig_member_map:
+            llm_result["members"] = [ig_member_map[item.source_id]]
         path = save_item(item, llm_result, fandom_id)
         if path:
             saved += 1
