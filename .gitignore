@@ -6,3 +6,4 @@ __pycache__/
 config/fandoms/*.yaml
 !config/fandoms/example.yaml
 logs/
+launchd/
