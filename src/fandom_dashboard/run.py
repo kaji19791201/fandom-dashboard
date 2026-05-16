@@ -22,6 +22,9 @@ def _load_llm():
     if provider == "claude_cli":
         from .llm.claude_cli import ClaudeCLIProvider
         return ClaudeCLIProvider()
+    if provider == "gemini":
+        from .llm.gemini import GeminiProvider
+        return GeminiProvider()
     raise ValueError(f"Unknown LLM_PROVIDER: {provider}")
 
 

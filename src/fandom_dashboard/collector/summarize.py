@@ -35,7 +35,7 @@ def summarize(item: RawItem, llm: LLMProvider, members: list[dict]) -> dict:
     )
     prompt = _build_prompt(item, members_json)
     try:
-        response = llm.complete(prompt)
+        response = llm.complete(prompt, image_url=item.image)
         result = _extract_json(response)
         return {
             "summary": result.get("summary", ""),

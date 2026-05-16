@@ -2,7 +2,7 @@ import subprocess
 
 
 class ClaudeCLIProvider:
-    def complete(self, prompt: str) -> str:
+    def complete(self, prompt: str, image_url: str = "") -> str:
         result = subprocess.run(
             ["claude", "-p", prompt],
             capture_output=True,
