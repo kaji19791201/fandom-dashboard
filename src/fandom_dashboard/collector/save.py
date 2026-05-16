@@ -42,10 +42,13 @@ def _image_ext(url: str) -> str:
 
 def _download_image(url: str, dest: Path) -> bool:
     try:
+        import io
+        from PIL import Image
         r = requests.get(url, timeout=15)
         r.raise_for_status()
         dest.write_bytes(r.content)
-        logger.debug("  image: %s -> %s (%d KB)", url[:80], dest.name, len(r.content) // 1024)
+        img = Image.open(io.BytesIO(r.content))
+        logger.info("  image: %s %dx%d", dest.name, img.width, img.height)
         return True
     except Exception as e:
         logger.warning("  image download failed %s: %s", url[:80], e)
