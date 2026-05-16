@@ -56,17 +56,13 @@ def _download_image(url: str, dest: Path) -> bool:
 
 
 def resolve_local_image(item: RawItem, output_dir: Path) -> Path | None:
-    """Download image if needed and return local path, or None if unavailable."""
+    """Return local image path if it already exists, otherwise None."""
     if not item.image or not item.save_image:
         return None
     url_hash = _url_hash(item.url)
     date_str = _parse_date(item.published, item.url)
     local_path = output_dir / f"{date_str}_{url_hash}{_image_ext(item.image)}"
-    if local_path.exists():
-        return local_path
-    if _download_image(item.image, local_path):
-        return local_path
-    return None
+    return local_path if local_path.exists() else None
 
 
 def save_item(
