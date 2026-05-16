@@ -55,6 +55,20 @@ def _download_image(url: str, dest: Path) -> bool:
         return False
 
 
+def resolve_local_image(item: RawItem, output_dir: Path) -> Path | None:
+    """Download image if needed and return local path, or None if unavailable."""
+    if not item.image or not item.save_image:
+        return None
+    url_hash = _url_hash(item.url)
+    date_str = _parse_date(item.published, item.url)
+    local_path = output_dir / f"{date_str}_{url_hash}{_image_ext(item.image)}"
+    if local_path.exists():
+        return local_path
+    if _download_image(item.image, local_path):
+        return local_path
+    return None
+
+
 def save_item(
     item: RawItem,
     llm_result: dict,
@@ -85,11 +99,13 @@ def save_item(
     if item.image and item.save_image:
         local_name = f"{date_str}_{url_hash}{_image_ext(item.image)}"
         local_path = output_dir / local_name
-        if local_path.exists() or _download_image(item.image, local_path):
+        if local_path.exists():
+            image_ref = local_name
+            image_embed = f"![]({local_name})"
+        elif _download_image(item.image, local_path):
             image_ref = local_name
             image_embed = f"![]({local_name})"
         else:
-            # fallback to remote URL when download fails
             image_ref = item.image
             image_embed = f"![](<{item.image}>)"
     elif item.image:

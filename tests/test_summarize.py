@@ -50,15 +50,12 @@ def test_summarize_fallback_on_invalid():
 
 
 def test_summarize_passes_image_url():
-    item_with_image = RawItem(
-        url="https://example.com/2",
-        title="タイトル",
-        summary="本文",
-        published="",
-        image="https://example.com/thumb.jpg",
-        source_id="natalie",
-        fandom_id="momoclo",
-    )
     llm = MockLLM('{"summary": "要約", "category": "news", "members": ["group"]}')
-    summarize(item_with_image, llm, MEMBERS)
-    assert llm.last_image_url == "https://example.com/thumb.jpg"
+    summarize(_ITEM, llm, MEMBERS, image_url="/tmp/thumb.jpg")
+    assert llm.last_image_url == "/tmp/thumb.jpg"
+
+
+def test_summarize_no_image_url_by_default():
+    llm = MockLLM('{"summary": "要約", "category": "news", "members": ["group"]}')
+    summarize(_ITEM, llm, MEMBERS)
+    assert llm.last_image_url == ""

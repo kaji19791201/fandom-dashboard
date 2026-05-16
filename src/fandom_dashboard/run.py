@@ -8,7 +8,7 @@ import yaml
 
 from .collector.dedup import deduplicate
 from .collector.fetch import collect_all
-from .collector.save import save_item
+from .collector.save import DOCS_ROOT, resolve_local_image, save_item
 from .collector.summarize import summarize
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -85,9 +85,12 @@ def run_fandom(fandom_config: dict, llm) -> int:
         if src["source_id"] != "instagram_official"
     }
 
+    items_dir = DOCS_ROOT / "fandom" / fandom_id / "items"
     saved = 0
     for item in deduped:
-        llm_result = summarize(item, llm, fandom_config.get("members", []))
+        local_img = resolve_local_image(item, items_dir)
+        image_url = str(local_img) if local_img else ""
+        llm_result = summarize(item, llm, fandom_config.get("members", []), image_url=image_url)
         if item.source_id in ig_member_map:
             llm_result["members"] = [ig_member_map[item.source_id]]
         path = save_item(item, llm_result, fandom_id)

@@ -28,14 +28,14 @@ def _extract_json(text: str) -> dict:
     return json.loads(text)
 
 
-def summarize(item: RawItem, llm: LLMProvider, members: list[dict]) -> dict:
+def summarize(item: RawItem, llm: LLMProvider, members: list[dict], image_url: str = "") -> dict:
     members_json = json.dumps(
         [{"id": m["id"], "names": m["names"]} for m in members],
         ensure_ascii=False,
     )
     prompt = _build_prompt(item, members_json)
     try:
-        response = llm.complete(prompt, image_url=item.image)
+        response = llm.complete(prompt, image_url=image_url)
         result = _extract_json(response)
         return {
             "summary": result.get("summary", ""),

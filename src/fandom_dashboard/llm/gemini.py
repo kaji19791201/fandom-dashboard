@@ -16,10 +16,15 @@ class GeminiProvider:
         contents: list = []
         if image_url:
             try:
-                resp = requests.get(image_url, timeout=10)
-                resp.raise_for_status()
-                mime = resp.headers.get("Content-Type", "image/jpeg").split(";")[0]
-                contents.append(types.Part.from_bytes(data=resp.content, mime_type=mime))
+                if image_url.startswith("/"):
+                    data = open(image_url, "rb").read()
+                    mime = "image/jpeg"
+                else:
+                    resp = requests.get(image_url, timeout=10)
+                    resp.raise_for_status()
+                    data = resp.content
+                    mime = resp.headers.get("Content-Type", "image/jpeg").split(";")[0]
+                contents.append(types.Part.from_bytes(data=data, mime_type=mime))
             except Exception:
                 pass
         contents.append(prompt)
