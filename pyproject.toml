@@ -12,6 +12,7 @@ dependencies = [
     "instaloader>=4.15.1",
     "requests>=2.34.2",
     "google-genai>=1.0",
+    "pydantic>=2.13.4",
 ]
 
 [dependency-groups]

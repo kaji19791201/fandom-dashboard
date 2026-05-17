@@ -9,6 +9,8 @@ from typing import Any
 import feedparser
 import requests
 
+from fandom_dashboard.config import FandomConfig
+
 logger = logging.getLogger(__name__)
 
 
@@ -187,43 +189,42 @@ def fetch_instagram(source: dict[str, Any], fandom_id: str) -> list[RawItem]:
     return items
 
 
-def collect_all(fandom_config: dict) -> list[RawItem]:
-    fandom_id = fandom_config["id"]
-    sources = fandom_config.get("sources", {})
+def collect_all(fandom_config: FandomConfig) -> list[RawItem]:
+    fandom_id = fandom_config.id
     items: list[RawItem] = []
 
-    for src in sources.get("rss", []):
+    for src in fandom_config.sources.rss:
         try:
-            new = fetch_rss(src, fandom_id)
+            new = fetch_rss(src.model_dump(), fandom_id)
             items.extend(new)
-            logger.info("  rss %s: %d items", src["source_id"], len(new))
+            logger.info("  rss %s: %d items", src.source_id, len(new))
         except Exception as e:
-            logger.error("  rss %s: FAILED %s", src["source_id"], e)
+            logger.error("  rss %s: FAILED %s", src.source_id, e)
 
-    for src in sources.get("rsshub", []):
-        if not src.get("enabled", True):
+    for src in fandom_config.sources.rsshub:
+        if not src.enabled:
             continue
         try:
-            new = fetch_rss(src, fandom_id)
+            new = fetch_rss(src.model_dump(), fandom_id)
             items.extend(new)
-            logger.info("  rsshub %s: %d items", src["source_id"], len(new))
+            logger.info("  rsshub %s: %d items", src.source_id, len(new))
         except Exception as e:
-            logger.error("  rsshub %s: FAILED %s", src["source_id"], e)
+            logger.error("  rsshub %s: FAILED %s", src.source_id, e)
 
-    for src in sources.get("scrape", []):
+    for src in fandom_config.sources.scrape:
         try:
-            new = fetch_scrape(src, fandom_id)
+            new = fetch_scrape(src.model_dump(), fandom_id)
             items.extend(new)
-            logger.info("  scrape %s: %d items", src["source_id"], len(new))
+            logger.info("  scrape %s: %d items", src.source_id, len(new))
         except Exception as e:
-            logger.error("  scrape %s: FAILED %s", src["source_id"], e)
+            logger.error("  scrape %s: FAILED %s", src.source_id, e)
 
-    for src in sources.get("instagram", []):
+    for src in fandom_config.sources.instagram:
         try:
-            new = fetch_instagram(src, fandom_id)
+            new = fetch_instagram(src.model_dump(), fandom_id)
             items.extend(new)
-            logger.info("  instagram %s: %d items", src["source_id"], len(new))
+            logger.info("  instagram %s: %d items", src.source_id, len(new))
         except Exception as e:
-            logger.error("  instagram %s: FAILED %s", src["source_id"], e)
+            logger.error("  instagram %s: FAILED %s", src.source_id, e)
 
     return items
