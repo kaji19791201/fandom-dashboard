@@ -88,6 +88,9 @@ def run_fandom(fandom_config: FandomConfig, llm) -> int:
         llm_result = summarize(item, llm, members_dicts, image_url=image_url)
         if item.source_id in ig_member_map:
             llm_result["members"] = [ig_member_map[item.source_id]]
+        if not llm_result["members"]:
+            logger.info("skip (no members): %s", item.url)
+            continue
         path = save_item(item, llm_result, fandom_id)
         if path:
             saved += 1
