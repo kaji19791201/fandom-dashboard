@@ -65,7 +65,7 @@ def _patch_md(md_path: Path, summary: str, category: str, members: list[str]) ->
     fm["category"] = category
     fm["members"] = members
 
-    fm_keys = ["fandom", "date", "source", "category", "members", "title", "url", "image"]
+    fm_keys = ["fandom", "date", "source", "category", "members", "title", "url", "image", "deleted"]
     fm_lines = []
     for k in fm_keys:
         if k not in fm:
@@ -189,6 +189,9 @@ def main():
 
     updated = 0
     for md_path in targets:
+        if _parse_frontmatter(md_path).get("deleted"):
+            logger.info("skip deleted: %s", md_path.name)
+            continue
         if _process_file(md_path, fandom_config, llm, ig_member_map, ig_display_map, ig_sources):
             updated += 1
         time.sleep(3)
